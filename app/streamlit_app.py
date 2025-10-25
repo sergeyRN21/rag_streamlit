@@ -47,22 +47,26 @@ def parse_constitution(text: str):
                     "metadata": {"article": article_num, "doc_type": "constitution"}
                 })
     return articles
-
-# Кэшированная инициализация RAG-цепочки
 @st.cache_resource
 def create_rag_chain():
-    # Загрузка и разбиение
-    loader = TextLoader("data/constitution_rf.txt", encoding="utf-8")
-    docs = loader.load()
+    # Читаем сырой текст напрямую
+    with open("data/constitution_rf.txt", "r", encoding="utf-8") as f:
+        full_text = f.read()
+
+    # Парсим по статьям
+    parsed_articles = parse_constitution(full_text)
+
+    # Создаём Document-объекты
     documents = [
         Document(page_content=art["text"], metadata=art["metadata"])
-        for art in parse_constitution(docs)
+        for art in parsed_articles
     ]
 
     # Векторная БД
     embeddings = HuggingFaceEmbeddings(model_name="intfloat/multilingual-e5-large")
     vectorstore = FAISS.from_documents(documents, embeddings)
     retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+
     # Цепочка
     rag_chain = (
         {"context": retriever, "question": RunnablePassthrough()}
