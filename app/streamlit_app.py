@@ -47,6 +47,7 @@ def parse_constitution(text: str):
                     "metadata": {"article": article_num, "doc_type": "constitution"}
                 })
     return articles
+
 @st.cache_resource
 def create_rag_chain():
     # Читаем сырой текст напрямую
@@ -75,41 +76,6 @@ def create_rag_chain():
         | StrOutputParser()
     )
     return rag_chain
-
-# Создание цепочки (выполняется один раз)
-rag_chain = create_rag_chain()
-
-# Streamlit UI
-st.set_page_config(page_title="Digital Lawyer", page_icon="⚖️")
-st.title("⚖️ Digital Lawyer — Консультант по Конституции РФ")
-
-# История чата
-if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {"role": "assistant", "content": "Здравствуйте! Задайте вопрос по Конституции РФ."}
-    ]
-
-# Отображение истории
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
-
-# Обработка ввода
-if prompt_input := st.chat_input("Ваш вопрос"):
-    # Добавить вопрос пользователя
-    st.session_state.messages.append({"role": "user", "content": prompt_input})
-    with st.chat_message("user"):
-        st.markdown(prompt_input)
-
-    # Генерация ответа
-    with st.chat_message("assistant"):
-        with st.spinner("Ищу в Конституции..."):
-            try:
-                response = rag_chain.invoke(prompt_input)
-            except Exception as e:
-                response = f"Ошибка: {str(e)}"
-        st.markdown(response)
-        st.session_state.messages.append({"role": "assistant", "content": response})
 
 # Создание цепочки (выполняется один раз)
 rag_chain = create_rag_chain()
