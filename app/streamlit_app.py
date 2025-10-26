@@ -1,7 +1,6 @@
-# app.py
 import os
 import streamlit as st
-from rag_core import ConstitutionRag  # ✅ Импортируем класс
+from rag_core import ConstitutionRag 
 
 @st.cache_resource
 def get_rag_chain():

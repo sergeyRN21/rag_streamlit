@@ -87,7 +87,7 @@ class ConstitutionRag:
         retriever = self.vectorstore.as_retriever(search_kwargs={"k": k})
 
         llm = ChatOpenAI(
-            model=llm_model,  # ✅ Передаём модель как параметр
+            model=llm_model,
             base_url=self.base_url,
             api_key=os.getenv(self.api_key),
             temperature=self.temperature,
