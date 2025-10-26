@@ -1,3 +1,4 @@
+# rag_core.py
 import os
 import regex as re
 from langchain_core.documents import Document
@@ -7,19 +8,21 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
+from dotenv import load_dotenv
 
+load_dotenv()
 
-class ConstitutionRag:
-    def __init__(self, 
-                file_path="data/constitution_rf.txt",
-                k=3, 
-                embedding_model="intfloat/multilingual-e5-large", 
-                llm_model="google/gemini-2.0-flash-001",
-                base_url="https://openrouter.ai/api/v1",
-                api_key="OPENROUTER_API_KEY",
-                temperature=0.1,
-                max_tokens=512
-                ):
+class ConstitutionRAG:
+    def __init__(self,
+                 file_path="data/constitution_rf.txt",
+                 k=3,
+                 embedding_model="intfloat/multilingual-e5-large",
+                 llm_model="google/gemini-2.0-flash-001",
+                 base_url="https://openrouter.ai/api/v1",
+                 api_key="OPENROUTER_API_KEY",
+                 temperature=0.1,
+                 max_tokens=512
+                 ):
         self.file_path = file_path
         self.k = k
         self.embedding_model = embedding_model
@@ -39,7 +42,7 @@ class ConstitutionRag:
             with open(self.file_path, "r", encoding="utf-8") as f:
                 self._full_text = f.read()
         return self._full_text
-    
+
     @staticmethod
     def parsed_articles(text):
         articles = []
@@ -60,7 +63,6 @@ class ConstitutionRag:
             full_text = self._load_text()
             self._parsed_articles = self.parsed_articles(full_text)
         return self._parsed_articles
-    
 
     def _get_documents(self):
         if self._documents is None:
@@ -70,7 +72,7 @@ class ConstitutionRag:
                 for art in parsed_articles
             ]
         return self._documents
-    
+
     def _get_embeddings(self):
         if self._embeddings is None:
             self._embeddings = HuggingFaceEmbeddings(model_name=self.embedding_model)
@@ -82,14 +84,20 @@ class ConstitutionRag:
             embeddings = self._get_embeddings()
             self._vectorstore = FAISS.from_documents(documents, embeddings)
         return self._vectorstore
-    
-    def create_rag_chain(self, llm_model: str, k: int = 3) -> tuple:
-        retriever = self.vectorstore.as_retriever(search_kwargs={"k": k})
+
+    def create_rag_chain(self, llm_model: str = None, k: int = None) -> tuple:
+        if llm_model is None:
+            llm_model = self.llm_model
+        if k is None:
+            k = self.k
+
+        vectorstore = self._get_vectorstore()
+        retriever = vectorstore.as_retriever(search_kwargs={"k": k})
 
         llm = ChatOpenAI(
             model=llm_model,
             base_url=self.base_url,
-            api_key=os.getenv(self.api_key),
+            api_key=os.getenv(self.api_key), 
             temperature=self.temperature,
             max_tokens=self.max_tokens,
         )

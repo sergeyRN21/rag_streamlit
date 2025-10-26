@@ -1,10 +1,9 @@
-import os
 import streamlit as st
-from rag_core import ConstitutionRag 
+from rag_core import ConstitutionRAG 
 
 @st.cache_resource
 def get_rag_chain():
-    rag = ConstitutionRag()
+    rag = ConstitutionRAG()
     rag_chain, retriever = rag.create_rag_chain()
     return rag_chain, retriever
 
