@@ -7,7 +7,7 @@ from rag_core import create_rag_chain
 def get_rag_chain():
     return create_rag_chain()
 
-rag_chain = get_rag_chain()
+rag_chain, retriever = get_rag_chain()
 
 st.set_page_config(page_title="Digital Lawyer", page_icon="⚖️")
 st.title("⚖️ Digital Lawyer — Консультант по Конституции РФ")

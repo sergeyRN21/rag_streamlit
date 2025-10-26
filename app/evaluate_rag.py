@@ -7,8 +7,8 @@ from langchain_openai import ChatOpenAI
 
 load_dotenv()
 
-from rag_core import create_rag_chain_and_retriever
-rag_chain, retriever = create_rag_chain_and_retriever()  # ✅ Получаем оба
+from rag_core import create_rag_chain
+rag_chain, retriever = create_rag_chain()
 
 class CorrectnessGrade(BaseModel):
     explanation: str = Field(..., description="Обоснование оценки")
