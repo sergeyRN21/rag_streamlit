@@ -1,11 +1,11 @@
 import os
 import streamlit as st
-from rag_core import create_rag_chain_and_retriever
+from rag_core import create_rag_chain
 
 
 @st.cache_resource
 def get_rag_chain():
-    return create_rag_chain_and_retriever()
+    return create_rag_chain()
 
 rag_chain = get_rag_chain()
 
