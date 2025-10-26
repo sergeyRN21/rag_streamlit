@@ -14,17 +14,6 @@ from rag_core import create_rag_chain
 import regex as re
 # Загрузка переменных окружения
 
-# Инициализация LLM через OpenRouter
-llm = ChatOpenAI(
-    model="google/gemini-2.0-flash-001",
-    base_url="https://openrouter.ai/api/v1",
-    api_key=os.getenv("OPENROUTER_API_KEY"),
-    temperature=0.1,
-    max_tokens=512,
-)
-
-# app.py
-
 @st.cache_resource
 def get_rag_chain():
     return create_rag_chain()
