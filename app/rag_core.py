@@ -62,41 +62,38 @@ def create_rag_chain():
     )
     return rag_chain,retriever
 
-# def create_rag_chain_and_retriever():
-#     with open("data/constitution_rf.txt", "r", encoding="utf-8") as f:
-#         full_text = f.read()
+def rag_chain_with_k5():
+    with open("data/constitution_rf.txt", "r", encoding = "UTF-8") as f:
+        full_text = f.read()
+    
+    parsed_articles = parse_constitution(full_text)
+    documents = [Document(page_content=art["text"], metadata=art["metadata"]) for art in parsed_articles]
 
-#     parsed_articles = parse_constitution(full_text)
-#     documents = [
-#         Document(page_content=art["text"], metadata=art["metadata"])
-#         for art in parsed_articles
-#     ]
+    embeddings = HuggingFaceEmbeddings(model_name="intfloat/multilingual-e5-large")
+    vectorstore = FAISS.from_documents(documents, embeddings)
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
 
-#     embeddings = HuggingFaceEmbeddings(model_name="intfloat/multilingual-e5-large")
-#     vectorstore = FAISS.from_documents(documents, embeddings)
-#     retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+    llm = ChatOpenAI(
+        model="google/gemini-2.0-flash-001",
+        base_url="https://openrouter.ai/api/v1",
+        api_key=os.getenv("OPENROUTER_API_KEY"),
+        temperature=0.1,
+        max_tokens=512,
+    )
 
-#     llm = ChatOpenAI(
-#         model="google/gemini-2.0-flash-001",
-#         base_url="https://openrouter.ai/api/v1",
-#         api_key=os.getenv("OPENROUTER_API_KEY"),
-#         temperature=0.1,
-#         max_tokens=512,
-#     )
+    prompt = ChatPromptTemplate.from_template(
+        """Ты — юрист, отвечающий строго по Конституции РФ.
+Контекст: {context}
+Вопрос: {question}
+Ответь кратко. Обязательно укажи номер статьи.
+Если в контексте нет ответа — скажи: "Я не знаю".
+"""
+    )
 
-#     prompt = ChatPromptTemplate.from_template(
-#         """Ты — юрист, отвечающий строго по Конституции РФ.
-# Контекст: {context}
-# Вопрос: {question}
-# Ответь кратко. Обязательно укажи номер статьи.
-# Если в контексте нет ответа — скажи: "Я не знаю".
-# """
-#     )
-
-#     rag_chain = (
-#         {"context": retriever, "question": RunnablePassthrough()}
-#         | prompt
-#         | llm
-#         | StrOutputParser()
-#     )
-#     return rag_chain, retriever
+    rag_chain = (
+        {"context": retriever, "question": RunnablePassthrough()}
+        | prompt
+        | llm
+        | StrOutputParser()
+    )
+    return rag_chain, retriever
