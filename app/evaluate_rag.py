@@ -7,11 +7,9 @@ from langchain_openai import ChatOpenAI
 
 load_dotenv()
 
-# === 1. Твой RAG ===
-from rag_core import create_rag_chain
-rag_chain = create_rag_chain()
+from rag_core import create_rag_chain_and_retriever
+rag_chain, retriever = create_rag_chain_and_retriever()  # ✅ Получаем оба
 
-# === 2. Grader LLM (Gemini 2.0 Flash через OpenRouter) ===
 class CorrectnessGrade(BaseModel):
     explanation: str = Field(..., description="Обоснование оценки")
     correct: bool = Field(..., description="True если ответ корректен")
@@ -24,40 +22,30 @@ grader_llm = ChatOpenAI(
     max_tokens=512,
 ).with_structured_output(CorrectnessGrade, method="function_calling")
 
-# === 3. Predict: example — dict в формате {"input": ..., "expected_output": ...} ===
 def predict(example: dict) -> dict:
-    # В evaluate() example — это плоский dict: {"input": "...", "expected_output": "..."}
-    question = example["input"]  # ← Вот так правильно!
-    result = rag_chain.invoke(question)
+    question = example["input"]
 
-    if isinstance(result, str):
-        answer = result
-    elif isinstance(result, dict):
-        answer = result.get("answer") or result.get("output") or str(result)
-    else:
-        answer = str(result)
+    docs = retriever.invoke(question)
+    contexts = [doc.page_content for doc in docs]
+    answer = rag_chain.invoke(question)
 
-    # Возвращаем с ключом "answer" — это имя, которое будем использовать в оценщике
-    return {"answer": answer}
+    return {
+        "answer": answer,
+        "retrieved_contexts": contexts
+    }
 
-# === 4. Correctness evaluator: run — объект RunTree, example — объект Example ===
 def correctness_evaluator(run, example) -> dict:
-    # run.outputs — предсказание модели (из функции predict)
     prediction = run.outputs.get("answer", "")
-
-    # example.outputs — эталонный ответ из датасета (внутреннее хранение LangSmith)
-    # В CSV: "expected_output" → в LangSmith: example.outputs["expected_output"]
     reference = (example.outputs or {}).get("expected_output")
 
     if not reference:
-        print(f"⚠️ ВНИМАНИЕ: reference пустой для example.inputs: {example.inputs}")  # ← Отладка
+        print(f"⚠️ ВНИМАНИЕ: reference пустой для example.inputs: {example.inputs}")
         return {
             "key": "correctness",
             "score": 0.0,
             "comment": "⚠️ No reference answer in dataset (expected_output not found)"
         }
 
-    # example.inputs — вопрос из датасета
     question = (example.inputs or {}).get("input") or ""
 
     prompt = f"""You are a fair teacher grading a quiz.
@@ -87,7 +75,7 @@ Respond with a JSON object containing:
     except Exception as e:
         score = 0.0
         comment = f"⚠️ Evaluation failed: {str(e)}"
-        print(f"❌ ОШИБКА в оценщике: {e}")  # ← Отладка
+        print(f"❌ ОШИБКА в correctness: {e}")
 
     return {
         "key": "correctness",
@@ -95,13 +83,132 @@ Respond with a JSON object containing:
         "comment": comment
     }
 
-# === 5. Запуск ===
+def groundedness_evaluator(run, example) -> dict:
+    prediction = run.outputs.get("answer", "")
+    contexts = run.outputs.get("retrieved_contexts", [])
+
+    if not contexts:
+        return {
+            "key": "groundedness",
+            "score": 0.0,
+            "comment": "⚠️ No retrieved contexts provided for groundedness check"
+        }
+
+    context_str = "\n\n".join(contexts)
+
+    prompt = f"""You are a teacher checking if a student's answer is grounded in the provided facts.
+CONTEXT: {context_str}
+STUDENT ANSWER: {prediction}
+
+Check if the STUDENT ANSWER is supported by the CONTEXT. Answer "True" if the answer is supported by the facts, "False" if it contains hallucinated or unsupported information.
+
+Respond with a JSON object containing:
+- "explanation": a short reason
+- "correct": true or false
+"""
+
+    try:
+        response = grader_llm.invoke([{"role": "user", "content": prompt}])
+        score = 1.0 if response.correct else 0.0
+        comment = response.explanation
+    except Exception as e:
+        score = 0.0
+        comment = f"⚠️ Evaluation failed: {str(e)}"
+        print(f"❌ ОШИБКА в groundedness: {e}")
+
+    return {
+        "key": "groundedness",
+        "score": score,
+        "comment": comment
+    }
+
+def relevance_evaluator(run, example) -> dict:
+    question = (example.inputs or {}).get("input") or ""
+    prediction = run.outputs.get("answer", "")
+
+    if not question:
+        return {
+            "key": "relevance",
+            "score": 0.0,
+            "comment": "⚠️ No question provided"
+        }
+
+    prompt = f"""You are a teacher checking if a student's answer is relevant to the question.
+QUESTION: {question}
+STUDENT ANSWER: {prediction}
+
+Check if the STUDENT ANSWER is relevant to the QUESTION and helps answer it. Answer "True" if it is, "False" if it is not.
+
+Respond with a JSON object containing:
+- "explanation": a short reason
+- "correct": true or false
+"""
+
+    try:
+        response = grader_llm.invoke([{"role": "user", "content": prompt}])
+        score = 1.0 if response.correct else 0.0
+        comment = response.explanation
+    except Exception as e:
+        score = 0.0
+        comment = f"⚠️ Evaluation failed: {str(e)}"
+        print(f"❌ ОШИБКА в relevance: {e}")
+
+    return {
+        "key": "relevance",
+        "score": score,
+        "comment": comment
+    }
+
+def retrieval_relevance_evaluator(run, example) -> dict:
+    question = (example.inputs or {}).get("input") or ""
+    contexts = run.outputs.get("retrieved_contexts", [])
+
+    if not contexts:
+        return {
+            "key": "retrieval_relevance",
+            "score": 0.0,
+            "comment": "⚠️ No retrieved contexts provided"
+        }
+
+    context_str = "\n\n".join(contexts)
+
+    prompt = f"""You are a teacher checking if the retrieved documents are relevant to the question.
+QUESTION: {question}
+RETRIEVED DOCUMENTS: {context_str}
+
+Check if the RETRIEVED DOCUMENTS are relevant to the QUESTION. Answer "True" if they contain information related to the question, "False" if they are completely unrelated.
+
+Respond with a JSON object containing:
+- "explanation": a short reason
+- "correct": true or false
+"""
+
+    try:
+        response = grader_llm.invoke([{"role": "user", "content": prompt}])
+        score = 1.0 if response.correct else 0.0
+        comment = response.explanation
+    except Exception as e:
+        score = 0.0
+        comment = f"⚠️ Evaluation failed: {str(e)}"
+        print(f"❌ ОШИБКА в retrieval_relevance: {e}")
+
+    return {
+        "key": "retrieval_relevance",
+        "score": score,
+        "comment": comment
+    }
+
 if __name__ == "__main__":
     evaluate(
         predict,
         data="b1df60af-0c6c-44eb-a0d3-09819dc434be",
-        evaluators=[correctness_evaluator],
-        description="Digital Lawyer — Correctness (Gemini 2.0 Flash via OpenRouter)",
+        evaluators=[
+            correctness_evaluator,
+            groundedness_evaluator,
+            relevance_evaluator,
+            retrieval_relevance_evaluator
+        ],
+        description="Digital Lawyer — Full RAG Evaluation",
         max_concurrency=1,
     )
     print("✅ Оценка завершена.")
