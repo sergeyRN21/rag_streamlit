@@ -7,8 +7,6 @@ from langchain_openai import ChatOpenAI
 
 load_dotenv()
 
-from rag_core import create_rag_chain
-
 class CorrectnessGrade(BaseModel):
     explanation: str = Field(..., description="Обоснование оценки")
     correct: bool = Field(..., description="True если ответ корректен")

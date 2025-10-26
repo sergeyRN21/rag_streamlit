@@ -1,11 +1,13 @@
+# app.py
 import os
 import streamlit as st
-from rag_core import create_rag_chain
-
+from rag_core import ConstitutionRag  # ✅ Импортируем класс
 
 @st.cache_resource
 def get_rag_chain():
-    return create_rag_chain()
+    rag = ConstitutionRag()
+    rag_chain, retriever = rag.create_rag_chain()
+    return rag_chain, retriever
 
 rag_chain, retriever = get_rag_chain()
 
@@ -20,7 +22,6 @@ if "messages" not in st.session_state:
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
-
 
 if prompt_input := st.chat_input("Ваш вопрос"):
     st.session_state.messages.append({"role": "user", "content": prompt_input})
