@@ -9,6 +9,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.documents import Document
+from rag_core import create_rag_chain
 
 import regex as re
 # Загрузка переменных окружения
@@ -22,63 +23,13 @@ llm = ChatOpenAI(
     max_tokens=512,
 )
 
-# Промпт
-prompt = ChatPromptTemplate.from_template(
-    """Ты — юрист, отвечающий строго по Конституции РФ.
-Контекст: {context}
-Вопрос: {question}
-Ответь кратко. Обязательно укажи номер статьи.
-Если в контексте нет ответа — скажи: "Я не знаю".
-"""
-)
-
-def parse_constitution(text: str):
-    articles = []
-    # Разделяем по "Статья N"
-    parts = re.split(r'\n(?=Статья \d+)', text)
-    for part in parts:
-        if "Статья" in part:
-            # Извлекаем номер статьи
-            match = re.search(r'Статья (\d+)', part)
-            if match:
-                article_num = int(match.group(1))
-                articles.append({
-                    "text": part.strip(),
-                    "metadata": {"article": article_num, "doc_type": "constitution"}
-                })
-    return articles
+# app.py
 
 @st.cache_resource
-def create_rag_chain():
-    # Читаем сырой текст напрямую
-    with open("data/constitution_rf.txt", "r", encoding="utf-8") as f:
-        full_text = f.read()
+def get_rag_chain():
+    return create_rag_chain()
 
-    # Парсим по статьям
-    parsed_articles = parse_constitution(full_text)
-
-    # Создаём Document-объекты
-    documents = [
-        Document(page_content=art["text"], metadata=art["metadata"])
-        for art in parsed_articles
-    ]
-
-    # Векторная БД
-    embeddings = HuggingFaceEmbeddings(model_name="intfloat/multilingual-e5-large")
-    vectorstore = FAISS.from_documents(documents, embeddings)
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
-
-    # Цепочка
-    rag_chain = (
-        {"context": retriever, "question": RunnablePassthrough()}
-        | prompt
-        | llm
-        | StrOutputParser()
-    )
-    return rag_chain
-
-# Создание цепочки (выполняется один раз)
-rag_chain = create_rag_chain()
+rag_chain = get_rag_chain()
 
 # Streamlit UI
 st.set_page_config(page_title="Digital Lawyer", page_icon="⚖️")
