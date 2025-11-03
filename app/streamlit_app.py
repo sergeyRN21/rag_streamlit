@@ -14,72 +14,134 @@ def load_logo_base64(path="logo.png"):
 
 logo_b64 = load_logo_base64()
 
-# === Стили в стиле TrafficSoft ===
+# === Стили — точная копия вашего скриншота ===
 st.markdown("""
 <style>
     :root {
         --ts-cyan: #00E5D0;
         --ts-purple: #9C6BFF;
         --ts-blue: #4A90E2;
-        --user-bg: #e3f2fd;
-        --assistant-bg: #f3fdfa;
+        --bg-light: #f8fbff;
+        --input-bg: #1e1e2e;
+        --text-dark: #333;
     }
 
-    /* Градиентный фон */
+    /* Полный фон — убираем чёрные полосы */
     .stApp {
-        background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%);
+        background: var(--bg-light);
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        overflow-y: auto;
     }
 
-    /* Логотип в заголовке */
-    .logo-header {
+    /* Шапка: логотип + HR Консультант + градиентная линия */
+    .header-container {
         display: flex;
         align-items: center;
-        gap: 12px;
-        margin-bottom: 20px;
-    }
-    .logo-header img {
-        height: 36px;
-    }
-    .logo-header h1 {
-        color: #333;
-        font-weight: 700;
-        margin: 0;
+        gap: 20px;
+        margin: 40px 0 30px 0;
+        padding: 0 20px;
     }
 
-    /* Градиентная линия под заголовком */
-    .logo-header::after {
-        content: '';
-        display: block;
-        width: 100%;
+    .logo-wrapper {
+        width: 120px;
+    }
+    .logo-wrapper img {
+        height: 30px;
+        object-fit: contain;
+    }
+
+    .title-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .title-text {
+        font-size: 2.8em;
+        font-weight: bold;
+        color: var(--text-dark);
+        line-height: 1.1;
+    }
+
+    .gradient-line {
         height: 3px;
+        width: 300px;
         background: linear-gradient(90deg, var(--ts-cyan), var(--ts-purple), var(--ts-blue));
-        margin-top: 8px;
         border-radius: 2px;
     }
 
+    /* Подзаголовок */
+    .subtitle {
+        color: #aaa;
+        font-size: 0.9em;
+        text-align: center;
+        margin: 0 20px 40px;
+    }
+
     /* Сообщения чата */
+    .stChatMessage {
+        background: white;
+        border-radius: 12px;
+        padding: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-bottom: 10px;
+    }
     .stChatMessage.user {
-        background-color: var(--user-bg);
+        background: #e3f2fd;
         border-left: 4px solid var(--ts-blue);
     }
     .stChatMessage.assistant {
-        background-color: var(--assistant-bg);
+        background: #f3fdfa;
         border-left: 4px solid var(--ts-cyan);
     }
 
-    /* Кнопки */
-    .stButton > button {
-        background: linear-gradient(90deg, var(--ts-cyan), var(--ts-purple));
-        color: white;
+    /* Инпут внизу — тёмная панель */
+    .input-container {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--input-bg);
+        padding: 15px 20px;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        z-index: 1000;
+    }
+
+    .input-field {
+        display: flex;
+        align-items: center;
+        background: #2d2d3d;
+        border-radius: 30px;
+        padding: 0 15px;
+        height: 50px;
+        width: 100%;
+    }
+
+    .input-field input {
+        background: transparent;
         border: none;
-        border-radius: 20px;
-        font-weight: 600;
-        padding: 8px 20px;
+        color: white;
+        font-size: 1em;
+        flex-grow: 1;
+        outline: none;
+        padding: 0 10px;
     }
-    .stButton > button:hover {
-        transform: scale(1.03);
-        box-shadow: 0 4px 10px rgba(0, 229, 208, 0.3);
+
+    .input-field button {
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 1.2em;
+        cursor: pointer;
+        padding: 0 10px;
     }
+
+    .input-field button:hover {
+        color: var(--ts-cyan);
+    }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -92,20 +154,27 @@ def get_rag_chain():
 
 rag_chain = get_rag_chain()
 
-# === Заголовок с логотипом ===
+# === Настройка страницы ===
 st.set_page_config(page_title="HR Консультант — TrafficSoft", page_icon="💼")
 
+# === Шапка: логотип + HR Консультант + градиентная линия ===
 if logo_b64:
     st.markdown(f'''
-    <div class="logo-header">
-        <img src="data:image/png;base64,{logo_b64}" alt="TrafficSoft Logo">
-        <h1>HR Консультант</h1>
+    <div class="header-container">
+        <div class="logo-wrapper">
+            <img src="data:image/png;base64,{logo_b64}" alt="TrafficSoft Logo">
+        </div>
+        <div class="title-wrapper">
+            <div class="title-text">HR<br>Консультант</div>
+            <div class="gradient-line"></div>
+        </div>
     </div>
     ''', unsafe_allow_html=True)
 else:
-    st.title("💼 HR Консультант — TrafficSoft")
+    st.markdown('<div class="header-container"><div class="title-wrapper"><div class="title-text">HR<br>Консультант</div><div class="gradient-line"></div></div></div>', unsafe_allow_html=True)
 
-st.markdown("Задайте вопрос по HR-политике компании: отпуска, бонусы, remote work, адаптация и др.")
+# === Подзаголовок ===
+st.markdown('<p class="subtitle">Задайте вопрос по HR-политике компании: отпуска, бонусы, remote work, адаптация и др.</p>', unsafe_allow_html=True)
 
 # === Инициализация чата ===
 if "messages" not in st.session_state:
@@ -118,8 +187,20 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# === Ввод и ответ ===
-if prompt := st.chat_input("Ваш вопрос по HR"):
+# === Фиксированное поле ввода внизу ===
+st.markdown('<div class="input-container">', unsafe_allow_html=True)
+
+with st.form(key="chat_form", clear_on_submit=True):
+    col1, col2 = st.columns([9, 1])
+    with col1:
+        prompt = st.text_input("", placeholder="Ваш вопрос по HR", label_visibility="collapsed")
+    with col2:
+        submit_button = st.form_submit_button("➤", use_container_width=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+# === Обработка запроса ===
+if submit_button and prompt.strip():
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
@@ -132,3 +213,6 @@ if prompt := st.chat_input("Ваш вопрос по HR"):
                 response = f"⚠️ Ошибка: {str(e)}"
         st.markdown(response)
         st.session_state.messages.append({"role": "assistant", "content": response})
+
+    # Прокрутка вниз (не работает в Streamlit, но можно обновить через релоад)
+    st.rerun()
