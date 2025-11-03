@@ -1,160 +1,230 @@
-# streamlit_app.py — стиль как на вашем скриншоте
 import streamlit as st
-from rag_core import TrafficSoftRAG
+from rag_core import TrafficSoftRAG  # Убедитесь, что этот модуль существует
 
-# Настройка страницы
-st.set_page_config(
-    page_title="Внутренний ассистент TrafficSoft",
-    page_icon="🤖",
-    layout="centered",
-    initial_sidebar_state="collapsed"
-)
-
-# CSS для тёмного стиля TrafficSoft
+# Кастомный CSS — стиль TrafficSoft
 st.markdown("""
 <style>
-/* Тёмный фон */
-body {
-    background-color: #0E0E10;
-    color: white;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
+    :root {
+        --ts-cyan: #00E5D0;
+        --ts-purple: #9C6BFF;
+        --ts-blue: #4A90E2;
+        --ts-gray: #333333;
+    }
 
-/* Заголовки */
-h1, h2, h3 {
-    color: white;
-    font-weight: 600;
-}
+    /* Фон */
+    .stApp {
+        background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 50%, #e6f7ff 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
 
-/* Кнопка отправки */
-.stButton>button {
-    background-color: #FF7A00; /* Оранжевый цвет из вашего скриншота */
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 10px;
-    font-weight: bold;
-    transition: background-color 0.3s;
-}
+    /* Шапка */
+    .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        border-bottom: 1px solid #eee;
+        background: white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
 
-.stButton>button:hover {
-    background-color: #E56D00;
-}
+    .header-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: bold;
+        font-size: 1.3em;
+        color: var(--ts-gray);
+    }
 
-/* Поле ввода */
-input[type="text"] {
-    background-color: #2A2A2C;
-    color: white;
-    border: 1px solid #444;
-    border-radius: 20px;
-    padding: 10px;
-    font-size: 16px;
-}
+    .nav-menu {
+        display: flex;
+        gap: 20px;
+        font-weight: 500;
+        color: var(--ts-gray);
+    }
 
-/* Сообщения чата */
-.chat-message {
-    padding: 10px 15px;
-    margin: 8px 0;
-    border-radius: 12px;
-    max-width: 80%;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
+    .nav-menu a {
+        text-decoration: none;
+        color: var(--ts-gray);
+        transition: color 0.2s;
+    }
 
-.chat-message.user {
-    background-color: #2A2A2C;
-    align-self: flex-end;
-    margin-left: auto;
-    justify-content: flex-end;
-}
+    .nav-menu a:hover {
+        color: var(--ts-blue);
+    }
 
-.chat-message.assistant {
-    background-color: #1E1E20;
-    align-self: flex-start;
-    justify-content: flex-start;
-}
+    .contact-button {
+        background: linear-gradient(90deg, var(--ts-cyan), var(--ts-purple));
+        color: white;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
 
-.chat-message .avatar {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    font-weight: bold;
-}
+    .contact-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 229, 208, 0.3);
+    }
 
-.chat-message.user .avatar {
-    background-color: #FF7A00;
-    color: white;
-}
+    /* Заголовок с градиентной линией */
+    .title-with-line {
+        position: relative;
+        padding-bottom: 10px;
+        font-size: 2.2em;
+        font-weight: bold;
+        color: var(--ts-gray);
+    }
+    .title-with-line::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--ts-cyan), var(--ts-purple), var(--ts-blue));
+        border-radius: 2px;
+    }
 
-.chat-message.assistant .avatar {
-    background-color: #00D1D1;
-    color: white;
-}
+    /* Сообщения чата */
+    .stChatMessage {
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 8px;
+        background-color: #f8f9fa;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .stChatMessage.user {
+        background-color: #e3f2fd;
+        border-left: 4px solid var(--ts-blue);
+    }
+    .stChatMessage.assistant {
+        background-color: #f3fdfa;
+        border-left: 4px solid var(--ts-cyan);
+    }
 
-/* Подсказка внизу */
-.footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: #0E0E10;
-    padding: 10px;
-    text-align: center;
-    border-top: 1px solid #2A2A2C;
-}
+    /* Кнопки в чате */
+    .stButton > button {
+        background: linear-gradient(90deg, var(--ts-cyan), var(--ts-purple));
+        color: white;
+        border-radius: 20px;
+        border: none;
+        padding: 8px 16px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    .stButton > button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 229, 208, 0.3);
+    }
+
 </style>
 """, unsafe_allow_html=True)
 
-# Логотип и заголовок
-col1, col2 = st.columns([1, 4])
-with col1:
-    # Если есть файл logo.png — разместите его в папке app/
-    try:
-        st.image("app/logo.png", width=80)
-    except:
-        # Заглушка — если логотипа нет
-        st.markdown('<div style="background:#2A2A2C; padding:5px; border-radius:10px; text-align:center">TrafficSoft</div>', unsafe_allow_html=True)
+# Инициализация RAG
+@st.cache_resource
+def get_rag_chain():
+    rag = TrafficSoftRAG()
+    rag_chain, retriever = rag.create_rag_chain()
+    return rag_chain, retriever
 
-with col2:
-    st.markdown("<h1 style='font-size: 2.5em;'>🤖 Внутренний ассистент TrafficSoft</h1>", unsafe_allow_html=True)
-    st.markdown("Задайте вопрос по внутренним регламентам — получите точный ответ с цитированием.")
+rag_chain, retriever = get_rag_chain()
 
-# Приветствие
+# Настройка страницы
+st.set_page_config(page_title="TrafficSoft — HR Консультант", page_icon="💼")
+
+# Шапка в стиле TrafficSoft
+st.markdown("""
+<div class="header-container">
+    <div class="header-logo">
+        <img src="data:image/png;base64,{logo_base64}" width="120" style="margin-right: 10px;">
+        <span>TrafficSoft</span>
+    </div>
+    <div class="nav-menu">
+        <a href="#">CGNAT</a>
+        <a href="#">ADC</a>
+        <a href="#">Проекты</a>
+        <a href="#">Новости</a>
+        <a href="#">Блог</a>
+        <a href="#">О компании</a>
+        <a href="#">Партнерам</a>
+        <a href="#">Поддержка</a>
+    </div>
+    <button class="contact-button">Связаться с нами</button>
+</div>
+""", unsafe_allow_html=True)
+
+# Загрузка логотипа из файла logo.png
+import base64
+with open("logo.png", "rb") as f:
+    logo_data = f.read()
+    logo_base64 = base64.b64encode(logo_data).decode()
+
+# Обновляем шапку с реальным логотипом
+st.markdown(f"""
+<div class="header-container">
+    <div class="header-logo">
+        <img src="data:image/png;base64,{logo_base64}" width="120" style="margin-right: 10px;">
+        <span>TrafficSoft</span>
+    </div>
+    <div class="nav-menu">
+        <a href="#">CGNAT</a>
+        <a href="#">ADC</a>
+        <a href="#">Проекты</a>
+        <a href="#">Новости</a>
+        <a href="#">Блог</a>
+        <a href="#">О компании</a>
+        <a href="#">Партнерам</a>
+        <a href="#">Поддержка</a>
+    </div>
+    <button class="contact-button">Связаться с нами</button>
+</div>
+""", unsafe_allow_html=True)
+
+# Основной заголовок
+st.markdown('<h1 class="title-with-line">HR Консультант TrafficSoft</h1>', unsafe_allow_html=True)
+
+# Подзаголовок
+st.markdown("""
+<p style="color: #777; font-size: 1.1em; line-height: 1.6;">
+Задайте вопрос по HR-политике компании — от оплаты труда до отпусков и корпоративной культуры.
+Мы поможем вам быстро найти ответ в официальных документах.
+</p>
+""", unsafe_allow_html=True)
+
+# Кнопка "Узнать о продуктах" — можно заменить на "HR-документы"
+if st.button("Посмотреть HR-документы"):
+    st.info("Это демонстрационная кнопка. В реальном приложении здесь может быть ссылка на внутренний портал.")
+
+# Разделитель
+st.markdown("---")
+
+# Чат-интерфейс
+st.subheader("💬 Задайте вопрос по HR-политике")
+
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "assistant", "content": "Здравствуйте! Я помогу найти информацию в ваших внутренних документах."}
+        {"role": "assistant", "content": "Привет! Я — ваш HR-консультант. Спрашивайте всё, что интересует: оплата, отпуска, командировки, адаптация и т.д."}
     ]
 
-# Отображение истории
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
-        avatar = "🤖" if msg["role"] == "assistant" else "👤"
-        st.markdown(f'<div class="chat-message {msg["role"]}"><div class="avatar">{avatar}</div>{msg["content"]}</div>', unsafe_allow_html=True)
+        st.markdown(msg["content"])
 
-# Поле ввода внизу
-st.markdown('<div class="footer">', unsafe_allow_html=True)
 if prompt_input := st.chat_input("Ваш вопрос"):
     st.session_state.messages.append({"role": "user", "content": prompt_input})
     with st.chat_message("user"):
-        st.markdown(f'<div class="chat-message user"><div class="avatar">👤</div>{prompt_input}</div>', unsafe_allow_html=True)
+        st.markdown(prompt_input)
 
     with st.chat_message("assistant"):
-        with st.spinner("Ищу в регламентах..."):
+        with st.spinner("Ищу в HR-документах..."):
             try:
-                @st.cache_resource
-                def get_rag_chain():
-                    rag = TrafficSoftRAG()
-                    return rag.create_rag_chain()
-
-                rag_chain, _ = get_rag_chain()
                 response = rag_chain.invoke(prompt_input)
             except Exception as e:
                 response = f"Ошибка: {str(e)}"
-        st.markdown(f'<div class="chat-message assistant"><div class="avatar">🤖</div>{response}</div>', unsafe_allow_html=True)
+        st.markdown(response)
         st.session_state.messages.append({"role": "assistant", "content": response})
-st.markdown('</div>', unsafe_allow_html=True)
