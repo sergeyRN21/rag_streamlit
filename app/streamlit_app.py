@@ -22,7 +22,7 @@ st.set_page_config(
 # - logo_icon.png — квадратная иконка для меню/страницы
 
 # Если файлы в папке images/
-HORIZONTAL_LOGO = "images/logo.png"   # или просто "logo.png", если в корне
+HORIZONTAL_LOGO = "logo.png"   # или просто "logo.png", если в корне
 
 
 # Добавляем логотип в шапку и иконку в меню
