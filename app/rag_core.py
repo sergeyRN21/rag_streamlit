@@ -66,8 +66,7 @@ class TrafficSoftRAG:
     def _get_embeddings(self):
         if self._embeddings is None:
             self._embeddings = HuggingFaceEmbeddings(
-                model_name=self.embedding_model,
-                encode_kwargs={'normalize_embeddings': True}
+                model_name=self.embedding_model
             )
         return self._embeddings
 
