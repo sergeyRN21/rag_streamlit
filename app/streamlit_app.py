@@ -14,12 +14,29 @@ def load_logo_base64(path="logo.png"):
 
 logo_b64 = load_logo_base64()
 
-# === Стили — только то, что работает гарантированно ===
+# === Стили — как у настоящего продукта ===
 st.markdown("""
 <style>
+    :root {
+        --ts-cyan: #00E5D0;
+        --ts-purple: #9C6BFF;
+        --ts-blue: #4A90E2;
+        --bg-light: #f8fbff;
+        --input-bg: #00E5D0;
+        --text-dark: #333;
+        --text-light: #777;
+        --chat-bg: white;
+        --avatar-bg: #ff7a00;
+        --shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    /* Полный фон */
     .stApp {
-        background: #f8fbff;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: var(--bg-light);
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        overflow-y: auto;
     }
 
     /* Шапка */
@@ -41,42 +58,43 @@ st.markdown("""
     .title {
         font-size: 2.4em;
         font-weight: bold;
-        color: #333;
+        color: var(--text-dark); /* ЧЁРНЫЙ ТЕКСТ — КАК НА СКРИНШОТЕ */
         margin: 0;
+        line-height: 1.1;
     }
 
     .gradient-line {
         height: 3px;
         width: 100%;
-        max-width: 1000px;
-        background: linear-gradient(90deg, #00E5D0, #9C6BFF, #4A90E2);
+        max-width: 800px;
+        background: linear-gradient(90deg, var(--ts-cyan), var(--ts-purple), var(--ts-blue));
         border-radius: 2px;
         margin: 10px 0 20px;
     }
 
     .subtitle {
-        color: #777;
+        color: var(--text-light);
         font-size: 0.9em;
         text-align: center;
         margin: 0 20px 30px;
     }
 
-    /* Сообщение ассистента */
+    /* Сообщение ассистента — один блок с аватаром */
     .msg {
         display: flex;
         align-items: flex-start;
         gap: 10px;
-        background: white;
+        background: var(--chat-bg);
         border-radius: 12px;
         padding: 12px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        box-shadow: var(--shadow);
         margin: 20px 20px 30px;
     }
 
     .avatar {
         width: 36px;
         height: 36px;
-        background: #ff7a00;
+        background: var(--avatar-bg);
         border-radius: 8px;
         display: flex;
         align-items: center;
@@ -88,7 +106,7 @@ st.markdown("""
 
     .content {
         flex-grow: 1;
-        color: #333;
+        color: var(--text-dark);
         font-size: 1em;
         line-height: 1.5;
     }
@@ -99,7 +117,7 @@ st.markdown("""
         bottom: 0;
         left: 0;
         right: 0;
-        background: #f8fbff;
+        background: var(--bg-light);
         padding: 15px 20px;
         box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
         z-index: 1000;
@@ -108,7 +126,7 @@ st.markdown("""
     .input-field {
         display: flex;
         align-items: center;
-        background: #00E5D0; /* Бирюзовый */
+        background: var(--input-bg);
         border-radius: 30px;
         padding: 0 15px;
         height: 50px;
@@ -196,7 +214,7 @@ with st.form(key="chat_form", clear_on_submit=True):
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# === Обработка запроса — без rerun, ответ отображается сразу ===
+# === Обработка запроса — ответ отображается сразу под приветствием ===
 if submit_button and prompt.strip():
     # Получаем ответ
     with st.spinner("Ищу в HR-документах..."):
@@ -205,7 +223,10 @@ if submit_button and prompt.strip():
         except Exception as e:
             response = f"⚠️ Ошибка: {str(e)}"
 
-    # Отображаем ответ
+    # Добавляем ответ в историю
+    st.session_state.messages.append({"role": "assistant", "content": response})
+
+    # Отображаем ответ — сразу после приветствия, а не внизу!
     st.markdown(f'''
     <div class="msg">
         <div class="avatar">🤖</div>
