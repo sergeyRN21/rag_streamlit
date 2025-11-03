@@ -43,37 +43,39 @@ st.markdown("""
         display: flex;
         align-items: center;
         gap: 20px;
-        margin: 40px 0 20px 0;
+        margin: 40px 0 15px 0;
         padding: 0 20px;
     }
 
     .logo-wrapper {
-        width: 150px;
+        width: 180px;
     }
     .logo-wrapper img {
-        height: 40px;
+        height: 48px;
         object-fit: contain;
     }
 
     .title-wrapper {
         display: flex;
-        flex-direction: column;
-        gap: 5px;
+        align-items: center;
+        gap: 15px;
     }
 
     .title-main {
-        font-size: 2.8em;
+        font-size: 2.4em;
         font-weight: bold;
         color: var(--text-dark);
         line-height: 1.1;
+        white-space: nowrap;
     }
 
     .gradient-line {
         height: 3px;
-        width: 300px;
+        width: 60%;
+        max-width: 800px;
         background: linear-gradient(90deg, var(--ts-cyan), var(--ts-purple), var(--ts-blue));
         border-radius: 2px;
-        margin-top: 10px;
+        margin-left: 20px;
     }
 
     /* Подзаголовок */
@@ -177,7 +179,7 @@ rag_chain = get_rag_chain()
 # === Настройка страницы ===
 st.set_page_config(page_title="HR Консультант — TrafficSoft", page_icon="💼")
 
-# === Шапка: логотип + HR Консультант + градиентная линия ===
+# === Шапка: логотип + HR Консультант в одну строку + длинная градиентная линия ===
 if logo_b64:
     st.markdown(f'''
     <div class="header-container">
@@ -185,13 +187,13 @@ if logo_b64:
             <img src="data:image/png;base64,{logo_b64}" alt="TrafficSoft Logo">
         </div>
         <div class="title-wrapper">
-            <div class="title-main">HR<br>Консультант</div>
+            <div class="title-main">HR Консультант</div>
             <div class="gradient-line"></div>
         </div>
     </div>
     ''', unsafe_allow_html=True)
 else:
-    st.markdown('<div class="header-container"><div class="title-wrapper"><div class="title-main">HR<br>Консультант</div><div class="gradient-line"></div></div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="header-container"><div class="title-wrapper"><div class="title-main">HR Консультант</div><div class="gradient-line"></div></div></div>', unsafe_allow_html=True)
 
 # === Подзаголовок ===
 st.markdown('<p class="subtitle">Задайте вопрос по HR-политике компании: отпуска, бонусы, remote work, адаптация и др.</p>', unsafe_allow_html=True)
@@ -224,9 +226,6 @@ st.markdown('</div>', unsafe_allow_html=True)
 if submit_button and prompt.strip():
     # Добавляем сообщение пользователя в историю
     st.session_state.messages.append({"role": "user", "content": prompt})
-
-    # Отображаем сообщение пользователя (если нужно — можно убрать, оставив только ответ)
-    # st.markdown(f'<div class="assistant-message" style="background:#e3f2fd;"><div class="avatar">👤</div><div class="message-content">{prompt}</div></div>', unsafe_allow_html=True)
 
     # Получаем ответ от LLM
     with st.spinner("Ищу в HR-документах..."):
