@@ -84,16 +84,16 @@ st.markdown("""
         margin: 0 20px 30px;
     }
 
-    /* Сообщения чата — белые блоки с оранжевым аватаром */
-    .stChatMessage {
+    /* Сообщение ассистента — один блок с аватаром */
+    .assistant-message {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
         background: var(--chat-bg);
         border-radius: 12px;
         padding: 12px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        margin-bottom: 10px;
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
+        margin: 20px 20px 30px;
     }
 
     .avatar {
@@ -196,19 +196,17 @@ else:
 # === Подзаголовок ===
 st.markdown('<p class="subtitle">Задайте вопрос по HR-политике компании: отпуска, бонусы, remote work, адаптация и др.</p>', unsafe_allow_html=True)
 
+# === Приветственное сообщение — одно, без дублей ===
+st.markdown(f'''
+<div class="assistant-message">
+    <div class="avatar">🤖</div>
+    <div class="message-content">Привет! Я помогу вам с вопросами по HR-политике TrafficSoft. Спрашивайте!</div>
+</div>
+''', unsafe_allow_html=True)
+
 # === Инициализация чата ===
 if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {"role": "assistant", "content": "Привет! Я помогу вам с вопросами по HR-политике TrafficSoft. Спрашивайте!"}
-    ]
-
-# === Отображение истории ===
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        if msg["role"] == "assistant":
-            st.markdown(f'<div class="stChatMessage"><div class="avatar">🤖</div><div class="message-content">{msg["content"]}</div></div>', unsafe_allow_html=True)
-        else:
-            st.markdown(f'<div class="stChatMessage"><div class="avatar">👤</div><div class="message-content">{msg["content"]}</div></div>', unsafe_allow_html=True)
+    st.session_state.messages = []
 
 # === Фиксированное поле ввода внизу ===
 st.markdown('<div class="input-container">', unsafe_allow_html=True)
@@ -224,18 +222,29 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 # === Обработка запроса ===
 if submit_button and prompt.strip():
+    # Добавляем сообщение пользователя в историю
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(f'<div class="stChatMessage"><div class="avatar">👤</div><div class="message-content">{prompt}</div></div>', unsafe_allow_html=True)
 
-    with st.chat_message("assistant"):
-        with st.spinner("Ищу в HR-документах..."):
-            try:
-                response = rag_chain.invoke(prompt)
-            except Exception as e:
-                response = f"⚠️ Ошибка: {str(e)}"
-        st.markdown(f'<div class="stChatMessage"><div class="avatar">🤖</div><div class="message-content">{response}</div></div>', unsafe_allow_html=True)
-        st.session_state.messages.append({"role": "assistant", "content": response})
+    # Отображаем сообщение пользователя (если нужно — можно убрать, оставив только ответ)
+    # st.markdown(f'<div class="assistant-message" style="background:#e3f2fd;"><div class="avatar">👤</div><div class="message-content">{prompt}</div></div>', unsafe_allow_html=True)
+
+    # Получаем ответ от LLM
+    with st.spinner("Ищу в HR-документах..."):
+        try:
+            response = rag_chain.invoke(prompt)
+        except Exception as e:
+            response = f"⚠️ Ошибка: {str(e)}"
+
+    # Добавляем ответ в историю
+    st.session_state.messages.append({"role": "assistant", "content": response})
+
+    # Отображаем ответ — один раз, без дубля
+    st.markdown(f'''
+    <div class="assistant-message">
+        <div class="avatar">🤖</div>
+        <div class="message-content">{response}</div>
+    </div>
+    ''', unsafe_allow_html=True)
 
     # Прокрутка вниз (Streamlit не поддерживает JS-скролл, но можно обновить)
     st.rerun()
