@@ -1,7 +1,6 @@
 # rag_core.py
 import os
-import pdfplumber
-from langchain_core.documents import Document
+from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_openai import ChatOpenAI
@@ -15,10 +14,10 @@ load_dotenv()
 
 class TrafficSoftRAG:
     def __init__(self,
-                 file_path="data/reglaments.pdf",
+                 file_path="data/hr_policy.pdf",
                  k=3,
                  embedding_model="BAAI/bge-m3",
-                 llm_model="google/gemini-2.0-flash-exp",
+                 llm_model="mistralai/mistral-7b-instruct:free",
                  openrouter_api_key=None,
                  temperature=0.1,
                  max_tokens=512
@@ -32,51 +31,47 @@ class TrafficSoftRAG:
         self.openrouter_api_key = openrouter_api_key or os.getenv("OPENROUTER_API_KEY")
         
         # Кэшируемые атрибуты
-        self._full_text = None
         self._documents = None
         self._embeddings = None
         self._vectorstore = None
 
-    def _load_text(self):
-        """Извлекает текст из PDF-файла"""
-        if self._full_text is None:
-            full_text = ""
-            try:
-                with pdfplumber.open(self.file_path) as pdf:
-                    for page in pdf.pages:
-                        text = page.extract_text()
-                        if text:
-                            full_text += text + "\n"
-            except Exception as e:
-                raise ValueError(f"Не удалось прочитать PDF: {e}")
-            self._full_text = full_text
-        return self._full_text
-
     def _get_documents(self):
-        """Разбивает текст на чанки и создаёт Document-объекты"""
+        """Загружает PDF и разбивает на чанки с помощью LangChain"""
         if self._documents is None:
-            text = self._load_text()
-            if not text.strip():
+            if not os.path.exists(self.file_path):
+                raise FileNotFoundError(f"Файл не найден: {self.file_path}")
+            
+            try:
+                loader = PyPDFLoader(self.file_path)
+                pages = loader.load()  # Список Document с page_content и metadata
+            except Exception as e:
+                raise ValueError(f"Не удалось загрузить PDF через PyPDFLoader: {e}")
+
+            if not pages:
                 raise ValueError("PDF-файл пуст или не содержит текста")
 
+            # Объединяем всё в один текст (опционально) или чанкуем сразу
             splitter = RecursiveCharacterTextSplitter(
                 chunk_size=400,
                 chunk_overlap=50,
                 separators=["\n\n", "\n", ". ", " "]
             )
-            chunks = splitter.split_text(text)
-            self._documents = [
-                Document(
-                    page_content=chunk,
-                    metadata={"source": os.path.basename(self.file_path), "chunk_id": i}
-                )
-                for i, chunk in enumerate(chunks)
-            ]
+            self._documents = splitter.split_documents(pages)
+            
+            # Опционально: упростить метаданные
+            for i, doc in enumerate(self._documents):
+                doc.metadata = {
+                    "source": os.path.basename(self.file_path),
+                    "chunk_id": i
+                }
         return self._documents
 
     def _get_embeddings(self):
         if self._embeddings is None:
-            self._embeddings = HuggingFaceEmbeddings(model_name=self.embedding_model, encode_kwargs={'normalize_embeddings': True})
+            self._embeddings = HuggingFaceEmbeddings(
+                model_name=self.embedding_model,
+                encode_kwargs={'normalize_embeddings': True}
+            )
         return self._embeddings
 
     def _get_vectorstore(self):
@@ -87,10 +82,6 @@ class TrafficSoftRAG:
         return self._vectorstore
 
     def create_rag_chain(self, llm_model: str = None, k: int = None):
-        """
-        Создаёт RAG-цепочку.
-        Возвращает (chain, retriever)
-        """
         if llm_model is None:
             llm_model = self.llm_model
         if k is None:
@@ -99,16 +90,14 @@ class TrafficSoftRAG:
         vectorstore = self._get_vectorstore()
         retriever = vectorstore.as_retriever(search_kwargs={"k": k})
 
-        # Используем OpenRouter через совместимость с OpenAI API
         llm = ChatOpenAI(
             model=llm_model,
-            base_url="https://openrouter.ai/api/v1",
+            base_url="https://openrouter.ai/api/v1",  # ← без пробелов!
             api_key=self.openrouter_api_key,
             temperature=self.temperature,
             max_tokens=self.max_tokens,
         )
 
-        # Промпт: строго по документу, с запретом на галлюцинации
         prompt = ChatPromptTemplate.from_template(
             """Ты — внутренний ассистент компании TrafficSoft. Отвечай строго на основе предоставленного контекста.
 Контекст: {context}
