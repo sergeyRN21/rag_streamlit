@@ -1,7 +1,7 @@
 # rag_core.py
 import os
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.vectorstores import FAISS
+from langchain_core.documents import Document
+from langchain_community.vectorstores import FAISS # type: ignore
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
@@ -14,10 +14,10 @@ load_dotenv()
 
 class TrafficSoftRAG:
     def __init__(self,
-                 file_path="app/data/hr_policy.pdf",
+                 file_path="app/data/hr_policy.txt",  # ← теперь .txt
                  k=3,
                  embedding_model="BAAI/bge-m3",
-                 llm_model="x-ai/grok-4-fast",
+                 llm_model="mistralai/mistral-7b-instruct:free",  # бесплатная и стабильная
                  openrouter_api_key=None,
                  temperature=0.1,
                  max_tokens=512
@@ -30,40 +30,37 @@ class TrafficSoftRAG:
         self.max_tokens = max_tokens
         self.openrouter_api_key = openrouter_api_key or os.getenv("OPENROUTER_API_KEY")
         
-        # Кэшируемые атрибуты
         self._documents = None
         self._embeddings = None
         self._vectorstore = None
 
     def _get_documents(self):
-        """Загружает PDF и разбивает на чанки с помощью LangChain"""
         if self._documents is None:
             if not os.path.exists(self.file_path):
                 raise FileNotFoundError(f"Файл не найден: {self.file_path}")
             
             try:
-                loader = PyPDFLoader(self.file_path)
-                pages = loader.load()  # Список Document с page_content и metadata
+                with open(self.file_path, "r", encoding="utf-8") as f:
+                    text = f.read()
             except Exception as e:
-                raise ValueError(f"Не удалось загрузить PDF через PyPDFLoader: {e}")
+                raise ValueError(f"Не удалось прочитать файл {self.file_path}: {e}")
 
-            if not pages:
-                raise ValueError("PDF-файл пуст или не содержит текста")
+            if not text.strip():
+                raise ValueError("Файл пуст")
 
-            # Объединяем всё в один текст (опционально) или чанкуем сразу
             splitter = RecursiveCharacterTextSplitter(
                 chunk_size=400,
                 chunk_overlap=50,
                 separators=["\n\n", "\n", ". ", " "]
             )
-            self._documents = splitter.split_documents(pages)
-            
-            # Опционально: упростить метаданные
-            for i, doc in enumerate(self._documents):
-                doc.metadata = {
-                    "source": os.path.basename(self.file_path),
-                    "chunk_id": i
-                }
+            chunks = splitter.split_text(text)
+            self._documents = [
+                Document(
+                    page_content=chunk,
+                    metadata={"source": os.path.basename(self.file_path), "chunk_id": i}
+                )
+                for i, chunk in enumerate(chunks)
+            ]
         return self._documents
 
     def _get_embeddings(self):
