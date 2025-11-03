@@ -26,7 +26,7 @@ HORIZONTAL_LOGO = "logo.png"   # или просто "logo.png", если в к�
 
 
 # Добавляем логотип в шапку и иконку в меню
-st.logo(HORIZONTAL_LOGO)
+st.logo(HORIZONTAL_LOGO, size="large")
 
 # Заголовок
 st.markdown("# 💼 HR Consultant")
