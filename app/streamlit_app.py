@@ -1,9 +1,9 @@
 import streamlit as st
-from rag_core import ConstitutionRAG 
+from rag_core import TrafficSoftRAG 
 
 @st.cache_resource
 def get_rag_chain():
-    rag = ConstitutionRAG()
+    rag = TrafficSoftRAG()
     rag_chain, retriever = rag.create_rag_chain()
     return rag_chain, retriever
 
