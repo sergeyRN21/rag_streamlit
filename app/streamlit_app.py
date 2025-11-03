@@ -27,6 +27,7 @@ st.markdown("""
         --text-light: #777;
         --chat-bg: white;
         --avatar-bg: #ff7a00;
+        --btn-hover: rgba(255, 255, 255, 0.2);
     }
 
     /* Полный фон */
@@ -71,8 +72,8 @@ st.markdown("""
 
     .gradient-line {
         height: 3px;
-        width: 60%;
-        max-width: 800px;
+        width: 100%;
+        max-width: 1000px;
         background: linear-gradient(90deg, var(--ts-cyan), var(--ts-purple), var(--ts-blue));
         border-radius: 2px;
         margin-left: 20px;
@@ -118,7 +119,7 @@ st.markdown("""
         line-height: 1.5;
     }
 
-    /* Поле ввода — бирюзовое с белым текстом */
+    /* Поле ввода — бирюзовое с белым текстом, на всю ширину, снизу */
     .input-container {
         position: fixed;
         bottom: 0;
@@ -160,8 +161,8 @@ st.markdown("""
     }
 
     .input-field button:hover {
-        color: #fff;
-        transform: scale(1.1);
+        background: var(--btn-hover);
+        border-radius: 50%;
     }
 
 </style>
@@ -210,7 +211,7 @@ st.markdown(f'''
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# === Фиксированное поле ввода внизу ===
+# === Фиксированное поле ввода внизу — на всю ширину ===
 st.markdown('<div class="input-container">', unsafe_allow_html=True)
 
 with st.form(key="chat_form", clear_on_submit=True):
