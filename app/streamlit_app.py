@@ -14,7 +14,7 @@ def load_logo_base64(path="logo.png"):
 
 logo_b64 = load_logo_base64()
 
-# === Стили — точная копия вашего скриншота ===
+# === Стили — точная копия вашего дизайна ===
 st.markdown("""
 <style>
     :root {
@@ -22,11 +22,14 @@ st.markdown("""
         --ts-purple: #9C6BFF;
         --ts-blue: #4A90E2;
         --bg-light: #f8fbff;
-        --input-bg: #1e1e2e;
+        --input-bg: #00E5D0;
         --text-dark: #333;
+        --text-light: #777;
+        --chat-bg: white;
+        --avatar-bg: #ff7a00;
     }
 
-    /* Полный фон — убираем чёрные полосы */
+    /* Полный фон */
     .stApp {
         background: var(--bg-light);
         margin: 0;
@@ -40,25 +43,25 @@ st.markdown("""
         display: flex;
         align-items: center;
         gap: 20px;
-        margin: 40px 0 30px 0;
+        margin: 40px 0 20px 0;
         padding: 0 20px;
     }
 
     .logo-wrapper {
-        width: 120px;
+        width: 150px;
     }
     .logo-wrapper img {
-        height: 30px;
+        height: 40px;
         object-fit: contain;
     }
 
     .title-wrapper {
         display: flex;
-        align-items: center;
-        gap: 10px;
+        flex-direction: column;
+        gap: 5px;
     }
 
-    .title-text {
+    .title-main {
         font-size: 2.8em;
         font-weight: bold;
         color: var(--text-dark);
@@ -70,49 +73,65 @@ st.markdown("""
         width: 300px;
         background: linear-gradient(90deg, var(--ts-cyan), var(--ts-purple), var(--ts-blue));
         border-radius: 2px;
+        margin-top: 10px;
     }
 
     /* Подзаголовок */
     .subtitle {
-        color: #aaa;
+        color: var(--text-light);
         font-size: 0.9em;
         text-align: center;
-        margin: 0 20px 40px;
+        margin: 0 20px 30px;
     }
 
-    /* Сообщения чата */
+    /* Сообщения чата — белые блоки с оранжевым аватаром */
     .stChatMessage {
-        background: white;
+        background: var(--chat-bg);
         border-radius: 12px;
         padding: 12px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         margin-bottom: 10px;
-    }
-    .stChatMessage.user {
-        background: #e3f2fd;
-        border-left: 4px solid var(--ts-blue);
-    }
-    .stChatMessage.assistant {
-        background: #f3fdfa;
-        border-left: 4px solid var(--ts-cyan);
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
     }
 
-    /* Инпут внизу — тёмная панель */
+    .avatar {
+        width: 36px;
+        height: 36px;
+        background: var(--avatar-bg);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 16px;
+    }
+
+    .message-content {
+        flex-grow: 1;
+        color: var(--text-dark);
+        font-size: 1em;
+        line-height: 1.5;
+    }
+
+    /* Поле ввода — бирюзовое с белым текстом */
     .input-container {
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
-        background: var(--input-bg);
+        background: var(--bg-light);
         padding: 15px 20px;
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
         z-index: 1000;
     }
 
     .input-field {
         display: flex;
         align-items: center;
-        background: #2d2d3d;
+        background: var(--input-bg);
         border-radius: 30px;
         padding: 0 15px;
         height: 50px;
@@ -139,7 +158,8 @@ st.markdown("""
     }
 
     .input-field button:hover {
-        color: var(--ts-cyan);
+        color: #fff;
+        transform: scale(1.1);
     }
 
 </style>
@@ -165,13 +185,13 @@ if logo_b64:
             <img src="data:image/png;base64,{logo_b64}" alt="TrafficSoft Logo">
         </div>
         <div class="title-wrapper">
-            <div class="title-text">HR<br>Консультант</div>
+            <div class="title-main">HR<br>Консультант</div>
             <div class="gradient-line"></div>
         </div>
     </div>
     ''', unsafe_allow_html=True)
 else:
-    st.markdown('<div class="header-container"><div class="title-wrapper"><div class="title-text">HR<br>Консультант</div><div class="gradient-line"></div></div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="header-container"><div class="title-wrapper"><div class="title-main">HR<br>Консультант</div><div class="gradient-line"></div></div></div>', unsafe_allow_html=True)
 
 # === Подзаголовок ===
 st.markdown('<p class="subtitle">Задайте вопрос по HR-политике компании: отпуска, бонусы, remote work, адаптация и др.</p>', unsafe_allow_html=True)
@@ -185,7 +205,10 @@ if "messages" not in st.session_state:
 # === Отображение истории ===
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+        if msg["role"] == "assistant":
+            st.markdown(f'<div class="stChatMessage"><div class="avatar">🤖</div><div class="message-content">{msg["content"]}</div></div>', unsafe_allow_html=True)
+        else:
+            st.markdown(f'<div class="stChatMessage"><div class="avatar">👤</div><div class="message-content">{msg["content"]}</div></div>', unsafe_allow_html=True)
 
 # === Фиксированное поле ввода внизу ===
 st.markdown('<div class="input-container">', unsafe_allow_html=True)
@@ -203,7 +226,7 @@ st.markdown('</div>', unsafe_allow_html=True)
 if submit_button and prompt.strip():
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
-        st.markdown(prompt)
+        st.markdown(f'<div class="stChatMessage"><div class="avatar">👤</div><div class="message-content">{prompt}</div></div>', unsafe_allow_html=True)
 
     with st.chat_message("assistant"):
         with st.spinner("Ищу в HR-документах..."):
@@ -211,8 +234,8 @@ if submit_button and prompt.strip():
                 response = rag_chain.invoke(prompt)
             except Exception as e:
                 response = f"⚠️ Ошибка: {str(e)}"
-        st.markdown(response)
+        st.markdown(f'<div class="stChatMessage"><div class="avatar">🤖</div><div class="message-content">{response}</div></div>', unsafe_allow_html=True)
         st.session_state.messages.append({"role": "assistant", "content": response})
 
-    # Прокрутка вниз (не работает в Streamlit, но можно обновить через релоад)
+    # Прокрутка вниз (Streamlit не поддерживает JS-скролл, но можно обновить)
     st.rerun()
