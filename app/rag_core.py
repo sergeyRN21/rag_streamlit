@@ -17,7 +17,7 @@ class TrafficSoftRAG:
                  file_path="data/hr_policy.pdf",
                  k=3,
                  embedding_model="BAAI/bge-m3",
-                 llm_model="mistralai/mistral-7b-instruct:free",
+                 llm_model="x-ai/grok-4-fast",
                  openrouter_api_key=None,
                  temperature=0.1,
                  max_tokens=512
