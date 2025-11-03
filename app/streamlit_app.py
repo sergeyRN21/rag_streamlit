@@ -73,7 +73,7 @@ input[type="text"] {
 col1, col2 = st.columns([1, 4])
 with col1:
     # Если есть файл logo.png — разместите его в папке app/
-    st.image("app/logo.jpg", width=80)
+    st.image("logo.jpg", width=80)
     
 with col2:
     st.title("🤖 Внутренний ассистент TrafficSoft")
