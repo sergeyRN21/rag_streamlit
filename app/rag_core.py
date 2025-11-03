@@ -15,7 +15,7 @@ load_dotenv()
 
 class TrafficSoftRAG:
     def __init__(self,
-                 file_path="data/hr_policy.pdf",
+                 file_path="data/reglaments.pdf",
                  k=3,
                  embedding_model="BAAI/bge-m3",
                  llm_model="google/gemini-2.0-flash-exp",
