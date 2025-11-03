@@ -14,7 +14,7 @@ load_dotenv()
 
 class TrafficSoftRAG:
     def __init__(self,
-                 file_path="app/data/hr_policy.txt",  # ← теперь .txt
+                 file_path="data/hr_policy.txt",  # ← теперь .txt
                  k=3,
                  embedding_model="BAAI/bge-m3",
                  llm_model="mistralai/mistral-7b-instruct:free",  # бесплатная и стабильная
