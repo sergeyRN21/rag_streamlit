@@ -95,7 +95,7 @@ class TrafficSoftRAG:
         )
 
         prompt = ChatPromptTemplate.from_template(
-            """Ты — внутренний ассистент компании TrafficSoft. Отвечай строго на основе предоставленного контекста.
+            """Ты — внутренний ассистент компании. Отвечай строго на основе предоставленного контекста.
 Контекст: {context}
 Вопрос: {question}
 
@@ -113,4 +113,5 @@ class TrafficSoftRAG:
             | llm
             | StrOutputParser()
         )
+
         return rag_chain, retriever
