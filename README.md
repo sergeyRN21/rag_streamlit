@@ -21,6 +21,15 @@
 - **LangSmith** — для оценки и A/B тестирования
 - **Pydantic** — для структурированного вывода LLM
 
+## Структура проекта
+
+.
+├── rag_core.py
+├── app.py
+├── evaluate_rag.py
+├── run_evaluation.py
+├── .env
+└── data/
 
 ## Установка и запуск
 
