@@ -42,8 +42,7 @@
 
 3. **Установите зависимости**:
 
-    > **Примечание**: В данном репозитории зависимости явно не указаны. Вам нужно будет установить необходимые пакеты вручную или создать `requirements.txt` на основе импортов в файлах. Примерный список:
-    > `pip install langchain-core langchain-community langchain-huggingface langchain-openai faiss-cpu python-dotenv streamlit langsmith pydantic`
+    > `pip install -r requirements.txt`
 
 4. **Настройте переменные окружения**:
 
