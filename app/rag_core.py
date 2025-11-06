@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-class TrafficSoftRAG:
+class HrRAG:
     def __init__(self,
                  file_path="data/hr_policy.txt",  # ← теперь .txt
                  k=3,
@@ -115,3 +115,4 @@ class TrafficSoftRAG:
         )
 
         return rag_chain, retriever
+
