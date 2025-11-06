@@ -21,23 +21,6 @@
 - **LangSmith** — для оценки и A/B тестирования
 - **Pydantic** — для структурированного вывода LLM
 
-## Структура проекта
-
-.
-├── rag_core.py          # Основная логика RAG-системы
-
-├── app.py               # Веб-интерфейс Streamlit
-
-├── evaluate_rag.py      # Логика оценки и метрик
-
-├── run_evaluation.py    # Скрипт для запуска A/B тестирования
-
-├── .env                 # Файл для хранения API-ключей (не включен в репозиторий)
-
-├── data/                # Директория для HR-документов (например, hr_policy.txt)
-
-└── README.md            # Этот файл
-
 
 ## Установка и запуск
 
@@ -96,6 +79,6 @@
 
 ## Настройка
 
-- `rag_core.py`: Настройте `file_path`, `k` (количество retrieved фрагментов), `embedding_model`, `llm_model`, `temperature`, `max_tokens` в конструкторе `TrafficSoftRAG`.
+- `rag_core.py`: Настройте `file_path`, `k` (количество retrieved фрагментов), `embedding_model`, `llm_model`, `temperature`, `max_tokens` в конструкторе `HrRAG`.
 - `app.py`: Можно настроить заголовок, описание и приветственное сообщение.
 - `evaluate_rag.py`: Настройте логику оценки и модели, используемые для грейдинга, если необходимо.
