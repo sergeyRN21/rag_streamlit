@@ -23,13 +23,7 @@
 
 ## Структура проекта
 
-.
-├── rag_core.py
-├── app.py
-├── evaluate_rag.py
-├── run_evaluation.py
-├── .env
-└── data/
+. ── rag_core.py ── app.py ── evaluate_rag.py ── run_evaluation.py ── .env ── data/
 
 ## Установка и запуск
 
