@@ -1,9 +1,9 @@
 import streamlit as st
-from rag_core import TrafficSoftRAG
+from rag_core import HrRAG
 
 @st.cache_resource
 def get_rag_chain():
-    rag = TrafficSoftRAG()
+    rag = HrRAG()
     rag_chain, retriever = rag.create_rag_chain()
     return rag_chain, retriever
 
@@ -61,3 +61,4 @@ if prompt_input := st.chat_input("Например: «Как оформить о
         st.markdown(response)
 
         st.session_state.messages.append({"role": "assistant", "content": response})
+
